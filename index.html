@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オンライン人狼ワードウルフ</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; text-align: center; background-color: #f0f2f5; color: #1c1e21; padding: 15px; margin: 0; }
+        .container { background-color: #ffffff; border-radius: 8px; padding: 20px; margin: 20px auto; max-width: 500px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { color: #1877f2; }
+        h2 { color: #333; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; margin-bottom: 20px; }
+        input[type="text"] { width: calc(100% - 24px); padding: 12px; font-size: 16px; border: 1px solid #dddfe2; border-radius: 6px; margin-bottom: 15px; }
+        button { width: 100%; padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; background-color: #1877f2; color: white; border: none; border-radius: 6px; transition: background-color 0.3s; margin-top: 10px; }
+        button:hover { background-color: #166fe5; }
+        button:disabled { background-color: #a0bdf0; cursor: not-allowed; }
+        .secondary-button { background-color: #e4e6eb; color: #4b4f56; }
+        .secondary-button:hover { background-color: #d8dade; }
+        .danger-button { background-color: #e02c4f; }
+        .danger-button:hover { background-color: #c72747; }
+        ul { list-style: none; padding: 0; }
+        li { background-color: #f0f2f5; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
+        #room-id-display { font-weight: bold; background-color: #e7f3ff; color: #1877f2; padding: 10px; border-radius: 6px; user-select: all; cursor: pointer; }
+        #word-display h3 { font-size: 2.2em; color: #fa383e; margin: 10px 0; }
+        .vote-option { display: block; width: calc(100% - 24px); text-align: left; padding: 12px; border: 1px solid #dddfe2; border-radius: 6px; margin-bottom: 8px; }
+        .vote-option input { margin-right: 10px; }
+        .eliminated { text-decoration: line-through; color: #888; }
+        .hidden { display: none; }
+        #chat-container { margin-top: 20px; border-top: 2px solid #f0f2f5; padding-top: 20px; }
+        #chat-messages { height: 150px; overflow-y: auto; border: 1px solid #dddfe2; border-radius: 6px; padding: 10px; text-align: left; margin-bottom: 10px; }
+        .chat-message { margin-bottom: 5px; }
+        .chat-message .player-name { font-weight: bold; }
+        #chat-input-area { display: flex; }
+        #chat-message-input { flex-grow: 1; margin: 0 10px 0 0; }
+        #send-chat-message-button { width: auto; flex-shrink: 0; }
+        #timer-display { font-size: 1.8em; font-weight: bold; color: #e02c4f; margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>オンライン人狼ワードウルフ</h1>
+
+    <div id="lobby-screen" class="container"><h2>ようこそ！</h2><input type="text" id="player-name" placeholder="あなたの名前を入力"><div id="create-room-section"><button id="create-room-button">部屋を作る</button></div><hr style="margin: 20px 0; border: 1px solid #f0f2f5;"><div id="join-room-section"><input type="text" id="room-id-input" placeholder="部屋IDを入力"><button id="join-room-button" class="secondary-button">部屋に入る</button></div></div>
+    <div id="waiting-screen" class="container hidden"><h2>待機中...</h2><p>部屋IDを友達に教えて、全員が揃うのを待ってね。</p><p>部屋ID: <span id="room-id-display"></span></p><h3>参加者リスト</h3><ul id="player-list"></ul><button id="start-game-button" class="hidden">ゲーム開始 (ホストのみ)</button></div>
+    
+    <div id="game-screen" class="container hidden">
+        <h2 id="game-header"></h2>
+        <div id="timer-display" class="hidden"></div>
+        <div id="phase-discussion"><p>自分のお題を確認し、会話をして誰が人狼か探りましょう。</p><button id="show-word-button">あなたのお題を見る</button><div id="word-display" class="hidden"><p>あなたのお題は...</p><h3 id="assigned-word"></h3><button id="hide-word-button" class="secondary-button">お題を隠す</button></div></div>
+        <div id="phase-voting" class="hidden"><p>最も人狼だと思う人に投票してください。</p><div id="vote-options"></div><button id="submit-vote-button">投票を決定する</button></div>
+        <div id="phase-waiting-for-others" class="hidden"><p>他のプレイヤーの投票を待っています...</p></div>
+        <div id="chat-container"><div id="chat-messages"></div><div id="chat-input-area"><input type="text" id="chat-message-input" placeholder="メッセージを入力..."><button id="send-chat-message-button">送信</button></div></div>
+        <button id="proceed-to-vote-button" class="danger-button hidden">投票へ進む (ホストのみ)</button>
+    </div>
+    
+    <div id="round-result-screen" class="container hidden"><h2 id="round-result-header">投票結果</h2><div id="vote-tally-display"></div><p id="elimination-result"></p><button id="next-round-button" class="hidden">次のラウンドへ (ホストのみ)</button></div>
+    <div id="final-result-screen" class="container hidden"><h2>ゲーム終了！</h2><p id="final-winner-text" style="font-size: 1.5em; font-weight: bold;"></p><p>各プレイヤーの役職は以下の通りでした。</p><ul id="role-reveal-list"></ul><button id="restart-game-button" class="hidden">もう一度このメンバーで遊ぶ (ホストのみ)</button></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, set, onValue, onDisconnect, remove, get, update, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // ======================================================
+        // TODO: あなたのFirebaseプロジェクトの設定情報に書き換えてください
+        // ======================================================
+        const firebaseConfig = { apiKey: "AIzaSyDL_gm2Vv3BrRskvzPUi4yParr9weXLAT0", authDomain: "blackjack-fa1d3.firebaseapp.com", databaseURL: "https://blackjack-fa1d3-default-rtdb.firebaseio.com", projectId: "blackjack-fa1d3", storageBucket: "blackjack-fa1d3.firebasestorage.app", messagingSenderId: "948904325337", appId: "1:948904325337:web:b86e21e40036c477944ec8", measurementId: "G-CN3ZH27WS9" };
+        
+        const app = initializeApp(firebaseConfig); const db = getDatabase(app);
+        const wordPairs = [ { majority: '海', minority: '山' }, { majority: '犬', minority: '猫' }, { majority: 'そば', minority: 'うどん' }, { majority: 'Tシャツ', minority: 'Yシャツ' }, { majority: 'おにぎり', minority: 'サンドイッチ' }, { majority: 'サングラス', minority: 'メガネ' }, { majority: 'カレーライス', minority: 'ハヤシライス' }, { majority: '牛乳', minority: '豆乳' }, { majority: 'きのこの山', minority: 'たけのこの里' }, { majority: 'こしあん', minority: 'つぶあん' }, { majority: 'マヨネーズ', minority: 'ケチャップ' }, { majority: 'みそ汁', minority: 'スープ' }, { majority: '鉛筆', minority: 'シャープペンシル' }, { majority: 'スマートフォン', minority: 'タブレット' }, { majority: 'ハサミ', minority: 'カッター' }, { majority: 'タクシー', minority: 'バス' }, { majority: '北海道', minority: '沖縄' }, { majority: '東京タワー', minority: 'スカイツリー' }, { majority: 'コンビニ', minority: 'スーパー' }, { majority: '図書館', minority: '本屋' }, { majority: '魔法', minority: '超能力' }, { majority: '忍者', minority: '侍' }, { majority: '夏休み', minority: '冬休み' }, { majority: 'ディズニーランド', minority: 'USJ' }, { majority: '天使', minority: '悪魔' }, { majority: '正社員', minority: 'アルバイト' }, { majority: '多数派', minority: '少数派' } ];
+        const DISCUSSION_TIME_SECONDS = 300; // 話し合い時間: 5分
+        const VOTING_TIME_SECONDS = 30; // 投票時間: 30秒
+
+        const screens = { lobby: document.getElementById('lobby-screen'), waiting: document.getElementById('waiting-screen'), game: document.getElementById('game-screen'), roundResult: document.getElementById('round-result-screen'), finalResult: document.getElementById('final-result-screen') };
+        const gamePhases = { discussion: document.getElementById('phase-discussion'), voting: document.getElementById('phase-voting'), waiting: document.getElementById('phase-waiting-for-others') };
+        const playerNameInput = document.getElementById('player-name'), roomIdInput = document.getElementById('room-id-input'), createRoomBtn = document.getElementById('create-room-button'), joinRoomBtn = document.getElementById('join-room-button');
+        const roomIdDisplay = document.getElementById('room-id-display'), playerList = document.getElementById('player-list'), startGameBtn = document.getElementById('start-game-button');
+        const gameHeader = document.getElementById('game-header'), showWordBtn = document.getElementById('show-word-button'), wordDisplay = document.getElementById('word-display'), assignedWord = document.getElementById('assigned-word'), hideWordBtn = document.getElementById('hide-word-button'), proceedToVoteBtn = document.getElementById('proceed-to-vote-button');
+        const voteOptions = document.getElementById('vote-options'), submitVoteBtn = document.getElementById('submit-vote-button');
+        const roundResultHeader = document.getElementById('round-result-header'), voteTallyDisplay = document.getElementById('vote-tally-display'), eliminationResult = document.getElementById('elimination-result'), nextRoundBtn = document.getElementById('next-round-button');
+        const finalWinnerText = document.getElementById('final-winner-text'), roleRevealList = document.getElementById('role-reveal-list'), restartGameBtn = document.getElementById('restart-game-button');
+        const chatMessages = document.getElementById('chat-messages'), chatMessageInput = document.getElementById('chat-message-input'), sendChatMessageBtn = document.getElementById('send-chat-message-button');
+        const timerDisplay = document.getElementById('timer-display');
+
+        let currentRoomId = null, currentPlayerId = sessionStorage.getItem('playerId') || `player_${Date.now()}`;
+        sessionStorage.setItem('playerId', currentPlayerId);
+        let isHost = false, roomStateUnsubscribe = null, timerInterval = null;
+
+        createRoomBtn.addEventListener('click', handleCreateRoom); joinRoomBtn.addEventListener('click', handleJoinRoom); startGameBtn.addEventListener('click', handleStartGame);
+        hideWordBtn.addEventListener('click', () => wordDisplay.classList.add('hidden')); 
+        proceedToVoteBtn.addEventListener('click', () => { // 投票に進むボタンでタイマーを設定
+            const votingEndTime = Date.now() + VOTING_TIME_SECONDS * 1000;
+            update(ref(db, `rooms/${currentRoomId}`), { phase: 'voting', votingEndTime });
+        });
+        submitVoteBtn.addEventListener('click', handleSubmitVote); nextRoundBtn.addEventListener('click', handleNextRound); restartGameBtn.addEventListener('click', handleRestartGame);
+        sendChatMessageBtn.addEventListener('click', handleSendMessage); chatMessageInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSendMessage(); });
+
+        function switchScreen(screenName) { Object.values(screens).forEach(s => s.classList.add('hidden')); screens[screenName]?.classList.remove('hidden'); if(timerInterval) clearInterval(timerInterval); }
+        function switchPhase(phaseName) { Object.values(gamePhases).forEach(p => p.classList.add('hidden')); gamePhases[phaseName]?.classList.remove('hidden'); }
+        
+        async function handleCreateRoom() { const p = playerNameInput.value.trim(); if (!p) return; isHost = true; currentRoomId = Math.random().toString(36).substring(2, 7).toUpperCase(); await set(ref(db, 'rooms/' + currentRoomId), { hostId: currentPlayerId, state: 'waiting', players: { [currentPlayerId]: { name: p, isAlive: true } } }); setupOnDisconnect(currentRoomId, currentPlayerId); listenToRoomUpdates(currentRoomId); }
+        async function handleJoinRoom() { const p = playerNameInput.value.trim(), r = roomIdInput.value.trim().toUpperCase(); if (!p || !r) return; const s = await get(ref(db, `rooms/${r}`)); if (!s.exists() || s.val().state !== 'waiting') return; isHost = false; currentRoomId = r; await set(ref(db, `rooms/${currentRoomId}/players/${currentPlayerId}`), { name: p, isAlive: true }); setupOnDisconnect(currentRoomId, currentPlayerId); listenToRoomUpdates(currentRoomId); }
+
+        function listenToRoomUpdates(roomId) { const r = ref(db, 'rooms/' + roomId); if (roomStateUnsubscribe) roomStateUnsubscribe(); roomStateUnsubscribe = onValue(r, (s) => { if (!s.exists()) { location.reload(); return; } const d = s.val(); showWordBtn.onclick = () => handleShowWord(d); renderScreen(d); }); }
+        
+        function renderScreen(roomData) {
+            playerList.innerHTML = ''; const allPlayers = roomData.players || {}; Object.entries(allPlayers).forEach(([id, p]) => { const li = document.createElement('li'); li.textContent = p.name + (id === roomData.hostId ? ' (ホスト)' : ''); if (!p.isAlive) li.classList.add('eliminated'); playerList.appendChild(li); });
+            switch (roomData.state) {
+                case 'waiting': switchScreen('waiting'); roomIdDisplay.textContent = currentRoomId; startGameBtn.classList.toggle('hidden', !isHost); startGameBtn.disabled = Object.keys(allPlayers).length < 3; break;
+                case 'playing': renderGameScreen(roomData); break;
+                case 'round_result': switchScreen('roundResult'); renderRoundResultScreen(roomData); break;
+                case 'finished': switchScreen('finalResult'); renderFinalResultScreen(roomData); break;
+            }
+        }
+
+        function renderGameScreen(roomData) {
+            const myPlayer = roomData.players[currentPlayerId];
+            if (!myPlayer.isAlive) { switchScreen('game'); switchPhase('waiting'); gameHeader.textContent = "あなたは追放されました。"; Object.values(gamePhases.discussion.children).forEach(el => el.classList.add('hidden')); timerDisplay.classList.add('hidden'); } else { Object.values(gamePhases.discussion.children).forEach(el => el.classList.remove('hidden')); }
+            chatMessageInput.disabled = !myPlayer.isAlive; sendChatMessageBtn.disabled = !myPlayer.isAlive;
+            switchScreen('game'); gameHeader.textContent = `第${roomData.round}ラウンド`;
+            proceedToVoteBtn.classList.toggle('hidden', !isHost || roomData.phase !== 'discussion');
+
+            if (timerInterval) clearInterval(timerInterval); // 既存のタイマーをクリア
+            if (roomData.phase === 'discussion') {
+                timerDisplay.classList.remove('hidden'); startTimer(roomData.discussionEndTime, "話し合い", DISCUSSION_TIME_SECONDS, () => update(ref(db, `rooms/${currentRoomId}`), { phase: 'voting', votingEndTime: Date.now() + VOTING_TIME_SECONDS * 1000 }));
+            } else if (roomData.phase === 'voting') {
+                timerDisplay.classList.remove('hidden'); startTimer(roomData.votingEndTime, "投票", VOTING_TIME_SECONDS, async () => { const snap = await get(ref(db, `rooms/${currentRoomId}`)); tallyVotes(snap.val()); });
+            } else { timerDisplay.classList.add('hidden'); }
+
+            switch(roomData.phase) {
+                case 'discussion': switchPhase('discussion'); break;
+                case 'voting':
+                    const myVote = roomData.votes && roomData.votes[currentPlayerId];
+                    if (myVote) { switchPhase('waiting'); } else {
+                        switchPhase('voting'); voteOptions.innerHTML = ''; const livingPlayers = Object.entries(roomData.players).filter(([id, p]) => p.isAlive && id !== currentPlayerId);
+                        livingPlayers.forEach(([id, p]) => { const l = document.createElement('label'); l.className = 'vote-option'; l.innerHTML = `<input type="radio" name="vote" value="${id}"> ${p.name}`; voteOptions.appendChild(l); });
+                    }
+                    break;
+            }
+            renderChat(roomData);
+        }
+
+        function renderChat(roomData) { chatMessages.innerHTML = ''; const m = roomData.messages || {}; Object.values(m).forEach(msg => { const el = document.createElement('div'); el.classList.add('chat-message'); const p = document.createElement('span'); p.classList.add('player-name'); p.textContent = `${msg.playerName}: `; el.appendChild(p); el.append(document.createTextNode(msg.text)); chatMessages.appendChild(el); }); chatMessages.scrollTop = chatMessages.scrollHeight; }
+        function renderRoundResultScreen(roomData) { voteTallyDisplay.innerHTML = '<h4>投票の内訳</h4>'; const v = roomData.votes || {}; Object.entries(v).forEach(([vId, tId]) => { const p = document.createElement('p'); p.textContent = `${roomData.players[vId].name} → ${roomData.players[tId].name}`; voteTallyDisplay.appendChild(p); }); if (roomData.lastEliminatedId) { const el = roomData.players[roomData.lastEliminatedId]; eliminationResult.textContent = `投票の結果、${el.name}さんが追放されました。`; } else { eliminationResult.textContent = '同数票、または投票がなかったため、追放者はいませんでした。'; } nextRoundBtn.classList.toggle('hidden', !isHost); }
+        function renderFinalResultScreen(roomData) { finalWinnerText.textContent = `${roomData.winner}チームの勝利！`; roleRevealList.innerHTML = ''; Object.entries(roomData.players).forEach(([id, p]) => { const li = document.createElement('li'); const r = roomData.wolfPlayerIds[id] ? '人狼' : '市民'; li.textContent = `${p.name}: ${r}`; if (r === '人狼') li.style.color = '#fa383e'; roleRevealList.appendChild(li); }); restartGameBtn.classList.toggle('hidden', !isHost); }
+
+        async function handleStartGame() {
+            const r = ref(db, 'rooms/' + currentRoomId); const s = await get(r); const d = s.val(); const pIds = Object.keys(d.players); if (pIds.length < 3) return;
+            const shuffled = [...pIds].sort(() => Math.random() - 0.5); const wolfCount = 1; // 人狼は常に1人
+            const wolfPlayerIds = {}; shuffled.slice(0, wolfCount).forEach(id => wolfPlayerIds[id] = true);
+            const wordPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+            const discussionEndTime = Date.now() + DISCUSSION_TIME_SECONDS * 1000;
+            await update(r, { state: 'playing', phase: 'discussion', round: 1, wolfPlayerIds, wordPair, discussionEndTime, eliminatedPlayers: null, votes: null, messages: null });
+        }
+        
+        function handleShowWord(roomData) { if (!roomData || !roomData.wolfPlayerIds || !roomData.wordPair) return; const isWolf = roomData.wolfPlayerIds[currentPlayerId]; assignedWord.textContent = isWolf ? roomData.wordPair.minority : roomData.wordPair.majority; wordDisplay.classList.remove('hidden'); }
+        async function handleSendMessage() { const t = chatMessageInput.value.trim(); if (t === '') return; const s = await get(ref(db, `rooms/${currentRoomId}`)); const d = s.val(); const p = d.players[currentPlayerId]; if (!p.isAlive) return; await push(ref(db, `rooms/${currentRoomId}/messages`), { playerId: currentPlayerId, playerName: p.name, text: t, timestamp: serverTimestamp() }); chatMessageInput.value = ''; }
+        async function handleSubmitVote() { const o = document.querySelector('input[name="vote"]:checked'); if (!o) return; await set(ref(db, `rooms/${currentRoomId}/votes/${currentPlayerId}`), o.value); const s = await get(ref(db, 'rooms/' + currentRoomId)); const d = s.val(); if (d.state !== 'playing' || d.phase !== 'voting') return; const l = Object.keys(d.players).filter(id => d.players[id].isAlive); const v = d.votes || {}; if (Object.keys(v).length === l.length) { tallyVotes(d); } }
+
+        function tallyVotes(roomData) {
+            if (roomData.state !== 'playing' || roomData.phase !== 'voting') return; // 重複実行を防止
+            const votes = roomData.votes || {}; const voteCounts = {}; Object.values(votes).forEach(tId => { voteCounts[tId] = (voteCounts[tId] || 0) + 1; });
+            let maxVotes = 0; let mostVotedIds = [];
+            Object.keys(voteCounts).forEach(id => { const count = voteCounts[id]; if (count > maxVotes) { maxVotes = count; mostVotedIds = [id]; } else if (count === maxVotes) { mostVotedIds.push(id); } });
+            
+            const updates = {};
+            if (mostVotedIds.length === 1 && maxVotes > 0) { const eId = mostVotedIds[0]; updates[`/players/${eId}/isAlive`] = false; updates['/lastEliminatedId'] = eId; } else { updates['/lastEliminatedId'] = null; }
+            updates['/state'] = 'round_result';
+            update(ref(db, 'rooms/' + currentRoomId), updates);
+        }
+
+        async function handleNextRound() {
+            const r = ref(db, 'rooms/' + currentRoomId); const s = await get(r); const d = s.val();
+            const living = Object.entries(d.players).filter(([id, p]) => p.isAlive); const wolves = living.filter(([id, p]) => d.wolfPlayerIds[id]); const citizens = living.filter(([id, p]) => !d.wolfPlayerIds[id]);
+            let winner = null; if (wolves.length === 0) { winner = "市民"; } else if (wolves.length >= citizens.length) { winner = "人狼"; }
+            if (winner) { await update(r, { state: 'finished', winner: winner });
+            } else { const discussionEndTime = Date.now() + DISCUSSION_TIME_SECONDS * 1000; await update(r, { state: 'playing', phase: 'discussion', round: d.round + 1, votes: null, discussionEndTime }); }
+        }
+        
+        async function handleRestartGame() { const r = ref(db, 'rooms/' + currentRoomId); const s = await get(ref(db, `rooms/${currentRoomId}/players`)); const p = s.val(); const u = {}; Object.keys(p).forEach(id => { u[`/players/${id}/isAlive`] = true; }); u['/state'] = 'waiting'; u['/round'] = null; u['/phase'] = null; u['/wolfPlayerIds'] = null; u['/wordPair'] = null; u['/votes'] = null; u['/winner'] = null; u['/lastEliminatedId'] = null; u['/messages'] = null; u['/discussionEndTime'] = null; u['/votingEndTime'] = null; await update(r, u); }
+        function setupOnDisconnect(roomId, playerId) { const pRef = ref(db, `rooms/${roomId}/players/${playerId}`); onDisconnect(pRef).remove(); if (isHost) { onDisconnect(ref(db, `rooms/${roomId}`)).remove(); } }
+        
+        function startTimer(endTime, prefix, defaultSeconds, onTimeout) {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const remaining = endTime ? Math.max(0, endTime - now) : defaultSeconds * 1000;
+                const minutes = Math.floor((remaining / 1000 / 60) % 60).toString().padStart(2, '0');
+                const seconds = Math.floor((remaining / 1000) % 60).toString().padStart(2, '0');
+                timerDisplay.textContent = `${prefix} 残り時間 ${minutes}:${seconds}`;
+
+                if (endTime && remaining <= 0) {
+                    clearInterval(timerInterval);
+                    // 集計役（ホストまたは代理）を決定してタイムアウト処理を実行
+                    get(ref(db, 'rooms/' + currentRoomId)).then(snapshot => {
+                        if(!snapshot.exists()) return;
+                        const roomData = snapshot.val();
+                        let managerId;
+                        const hostIsAlive = roomData.players[roomData.hostId]?.isAlive;
+                        if (hostIsAlive) {
+                            managerId = roomData.hostId;
+                        } else {
+                            const livingPlayers = Object.keys(roomData.players).filter(id => roomData.players[id].isAlive);
+                            if (livingPlayers.length > 0) {
+                                managerId = livingPlayers.sort()[0];
+                            }
+                        }
+                        if (currentPlayerId === managerId) {
+                            onTimeout();
+                        }
+                    });
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
