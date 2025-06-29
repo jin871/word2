@@ -65,7 +65,46 @@
         const firebaseConfig = { apiKey: "AIzaSyDL_gm2Vv3BrRskvzPUi4yParr9weXLAT0", authDomain: "blackjack-fa1d3.firebaseapp.com", databaseURL: "https://blackjack-fa1d3-default-rtdb.firebaseio.com", projectId: "blackjack-fa1d3", storageBucket: "blackjack-fa1d3.firebasestorage.app", messagingSenderId: "948904325337", appId: "1:948904325337:web:b86e21e40036c477944ec8", measurementId: "G-CN3ZH27WS9" };
         
         const app = initializeApp(firebaseConfig); const db = getDatabase(app);
-        const wordPairs = [ { majority: '海', minority: '山' }, { majority: '犬', minority: '猫' }, { majority: 'そば', minority: 'うどん' }, { majority: 'Tシャツ', minority: 'Yシャツ' }, { majority: 'おにぎり', minority: 'サンドイッチ' }, { majority: 'サングラス', minority: 'メガネ' }, { majority: 'カレーライス', minority: 'ハヤシライス' }, { majority: '牛乳', minority: '豆乳' }, { majority: 'きのこの山', minority: 'たけのこの里' }, { majority: 'こしあん', minority: 'つぶあん' }, { majority: 'マヨネーズ', minority: 'ケチャップ' }, { majority: 'みそ汁', minority: 'スープ' }, { majority: '鉛筆', minority: 'シャープペンシル' }, { majority: 'スマートフォン', minority: 'タブレット' }, { majority: 'ハサミ', minority: 'カッター' }, { majority: 'タクシー', minority: 'バス' }, { majority: '北海道', minority: '沖縄' }, { majority: '東京タワー', minority: 'スカイツリー' }, { majority: 'コンビニ', minority: 'スーパー' }, { majority: '図書館', minority: '本屋' }, { majority: '魔法', minority: '超能力' }, { majority: '忍者', minority: '侍' }, { majority: '夏休み', minority: '冬休み' }, { majority: 'ディズニーランド', minority: 'USJ' }, { majority: '天使', minority: '悪魔' }, { majority: '正社員', minority: 'アルバイト' }, { majority: '多数派', minority: '少数派' } ];
+        const wordPairs = [ { majority: '海', minority: '山' }, { majority: '犬', minority: '猫' }, { majority: 'そば', minority: 'うどん' }, { majority: 'Tシャツ', minority: 'Yシャツ' }, { majority: 'おにぎり', minority: 'サンドイッチ' }, { majority: 'サングラス', minority: 'メガネ' }, { majority: 'カレーライス', minority: 'ハヤシライス' }, { majority: '牛乳', minority: '豆乳' }, { majority: 'きのこの山', minority: 'たけのこの里' }, { majority: 'こしあん', minority: 'つぶあん' }, { majority: 'マヨネーズ', minority: 'ケチャップ' }, { majority: 'みそ汁', minority: 'スープ' }, { majority: '鉛筆', minority: 'シャープペンシル' }, { majority: 'スマートフォン', minority: 'タブレット' }, { majority: 'ハサミ', minority: 'カッター' }, { majority: 'タクシー', minority: 'バス' }, { majority: '北海道', minority: '沖縄' }, { majority: '東京タワー', minority: 'スカイツリー' }, { majority: 'コンビニ', minority: 'スーパー' }, { majority: '図書館', minority: '本屋' }, { majority: '魔法', minority: '超能力' }, { majority: '忍者', minority: '侍' }, { majority: '夏休み', minority: '冬休み' }, { majority: 'ディズニーランド', minority: 'USJ' }, { majority: '天使', minority: '悪魔' }, { majority: '正社員', minority: 'アルバイト' }, { majority: '多数派', minority: '少数派' },{ majority: '海', minority: '山' },
+            { majority: 'そば', minority: 'うどん' },
+            { majority: 'Tシャツ', minority: 'Yシャツ' },
+            { majority: 'おにぎり', minority: 'サンドイッチ' },
+            { majority: 'サングラス', minority: 'メガネ' },
+            { majority: 'カレーライス', minority: 'ハヤシライス' },
+            { majority: '牛乳', minority: '豆乳' },
+            { majority: 'きのこの山', minority: 'たけのこの里' },
+            { majority: 'こしあん', minority: 'つぶあん' },
+            { majority: 'マヨネーズ', minority: 'ケチャップ' },
+            { majority: 'みそ汁', minority: 'スープ' },
+            { majority: '鉛筆', minority: 'シャープペンシル' },
+            { majority: 'ハサミ', minority: 'カッター' },
+            { majority: 'タクシー', minority: 'バス' },
+            { majority: '北海道', minority: '沖縄' },
+            { majority: '東京タワー', minority: 'スカイツリー' },
+            { majority: 'コンビニ', minority: 'スーパー' },
+            { majority: '図書館', minority: '本屋' },
+            { majority: '魔法', minority: '超能力' },
+            { majority: '忍者', minority: '侍' },
+            { majority: '夏休み', minority: '冬休み' },
+            { majority: 'ディズニーランド', minority: 'USJ' },
+            { majority: '天使', minority: '悪魔' },
+            { majority: '正社員', minority: 'アルバイト' },
+            { majority: '多数派', minority: '少数派' },
+            
+            // ▼▼▼ 新しく追加したお題 ▼▼▼
+            { majority: 'りんご', minority: '梨' },
+            { majority: '猫', minority: '犬' },
+            { majority: 'サメ', minority: 'イルカ' },
+            { majority: 'ケーキ', minority: 'パイ' },
+            { majority: '砂糖', minority: '塩' },
+            { majority: '冷蔵庫', minority: '電子レンジ' },
+            { majority: 'スマホ', minority: 'タブレット' },
+            { majority: '動物園', minority: '水族館' },
+            { majority: 'ポテトチップス', minority: 'ポップコーン' },
+            { majority: 'ソファ', minority: '椅子' },
+            { majority: '飛行機', minority: 'ヘリコプター' },
+            { majority: 'スプーン', minority: 'フォーク' },
+            { majority: 'ほうき', minority: 'モップ' }];
         const DISCUSSION_TIME_SECONDS = 300; // 話し合い時間: 5分
         const VOTING_TIME_SECONDS = 30; // 投票時間: 30秒
 
